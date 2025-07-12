@@ -36,6 +36,17 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Database connection middleware for Vercel
+app.use(async (req, res, next) => {
+  try {
+    await connectToDatabase();
+    next();
+  } catch (error) {
+    console.error('Database connection failed:', error);
+    res.status(500).json({ message: 'Database connection failed' });
+  }
+});
+
 // Static files
 app.use('/uploads', express.static('uploads'));
 app.use('/templates', express.static('public/templates'));
@@ -84,18 +95,39 @@ io.on('connection', (socket) => {
 });
 
 // MongoDB connection
-mongoose.connect(MONGODB_URI)
-  .then(() => {
+let isConnected = false;
+
+const connectToDatabase = async () => {
+  if (isConnected) {
+    return;
+  }
+  
+  try {
+    await mongoose.connect(MONGODB_URI);
+    isConnected = true;
     console.log('✅ Connected to MongoDB');
-    server.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`📚 Library Management API ready!`);
-    });
-  })
-  .catch((error) => {
+  } catch (error) {
     console.error('❌ MongoDB connection error:', error);
-    process.exit(1);
-  });
+    throw error;
+  }
+};
+
+// For local development
+if (process.env.NODE_ENV !== 'production') {
+  const startServer = async () => {
+    try {
+      await connectToDatabase();
+      server.listen(PORT, () => {
+        console.log(`🚀 Server running on port ${PORT}`);
+        console.log(`📚 Library Management API ready!`);
+      });
+    } catch (error) {
+      console.error('❌ Server startup error:', error);
+      process.exit(1);
+    }
+  };
+  startServer();
+}
 
 // Error handling middleware
 app.use((error, req, res, next) => {
