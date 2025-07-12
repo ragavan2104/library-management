@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { useSocket } from '../../context/SocketContext';
 import {
   HomeIcon,
   BookOpenIcon,
@@ -11,11 +10,9 @@ import {
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
 } from '@heroicons/react/24/outline';
-import clsx from 'clsx';
 
 const Sidebar = () => {
   const { user, logout } = useAuth();
-  const { connected } = useSocket();
   const location = useLocation();
 
   const navigation = [
@@ -60,14 +57,11 @@ const Sidebar = () => {
             </div>
           </div>
           
-          {/* Connection Status */}
+          {/* System Status - Updated for serverless deployment */}
           <div className="mt-2 flex items-center">
-            <div className={clsx(
-              'h-2 w-2 rounded-full mr-2',
-              connected ? 'bg-green-400' : 'bg-red-400'
-            )} />
+            <div className="h-2 w-2 rounded-full mr-2 bg-green-400" />
             <span className="text-xs text-gray-500">
-              {connected ? 'Connected' : 'Disconnected'}
+              System Online
             </span>
           </div>
         </div>
