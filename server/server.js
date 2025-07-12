@@ -31,11 +31,27 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/librar
 
 // Middleware
 app.use(cors({
-  origin: process.env.CLIENT_URL || "http://localhost:5173",
-  credentials: true
+  origin: [
+    'http://localhost:5173',
+    'https://library-management-peach-ten.vercel.app',
+    process.env.CLIENT_URL
+  ].filter(Boolean), // Remove undefined values
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 200
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Handle preflight requests
+app.options('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.sendStatus(200);
+});
 
 // Database connection middleware for Vercel
 app.use(async (req, res, next) => {
