@@ -9,10 +9,11 @@ import bcrypt from 'bcryptjs';
 
 const router = express.Router();
 
-// Configure multer for file uploads
+// Configure multer for file uploads - Using /tmp for Vercel compatibility
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = 'uploads/excel';
+    // Use /tmp directory for Vercel serverless functions
+    const uploadDir = process.env.NODE_ENV === 'production' ? '/tmp/excel' : 'uploads/excel';
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
@@ -55,6 +56,12 @@ const generatePassword = () => {
 // @access  Private (Admin only)
 router.post('/upload-students', auth, isAdmin, upload.single('excelFile'), async (req, res) => {
   try {
+    console.log('Upload request received:', {
+      file: req.file ? 'File uploaded' : 'No file',
+      environment: process.env.NODE_ENV,
+      uploadPath: req.file?.path
+    });
+
     if (!req.file) {
       return res.status(400).json({
         success: false,
@@ -129,8 +136,18 @@ router.post('/upload-students', auth, isAdmin, upload.single('excelFile'), async
           rollno: student.rollNo.toString(),
           department: student.department.trim(),
           year: student.passedOutYear.toString(),
-          college: student.college || 'Default College',
-          role: 'student'
+          college: student.college?.trim() || 'Engineering College', // Default college name
+          role: 'student',
+          phone: student.phone || '', // Optional phone
+          address: student.address || '', // Optional address
+          isActive: true
+        });
+
+        console.log('Creating student:', {
+          name: newStudent.name,
+          email: newStudent.email,
+          rollno: newStudent.rollno,
+          college: newStudent.college
         });
 
         await newStudent.save();
@@ -146,6 +163,10 @@ router.post('/upload-students', auth, isAdmin, upload.single('excelFile'), async
         });
 
       } catch (error) {
+        console.error('Student creation error:', error.message, {
+          studentData: student,
+          row: i + 2
+        });
         results.failed.push({
           row: i + 2,
           data: student,
@@ -170,7 +191,9 @@ router.post('/upload-students', auth, isAdmin, upload.single('excelFile'), async
       const credentialsWorksheet = XLSX.utils.json_to_sheet(credentialsData);
       XLSX.utils.book_append_sheet(credentialsWorkbook, credentialsWorksheet, 'Student Credentials');
 
-      downloadPath = `uploads/excel/credentials-${Date.now()}.xlsx`;
+      // Use appropriate directory based on environment
+      const downloadDir = process.env.NODE_ENV === 'production' ? '/tmp/excel' : 'uploads/excel';
+      downloadPath = `${downloadDir}/credentials-${Date.now()}.xlsx`;
       XLSX.writeFile(credentialsWorkbook, downloadPath);
     }
 
@@ -211,7 +234,9 @@ router.post('/upload-students', auth, isAdmin, upload.single('excelFile'), async
 router.get('/download-credentials/:filename', auth, isAdmin, (req, res) => {
   try {
     const filename = req.params.filename;
-    const filePath = path.join('uploads/excel', filename);
+    // Use appropriate directory based on environment
+    const downloadDir = process.env.NODE_ENV === 'production' ? '/tmp/excel' : 'uploads/excel';
+    const filePath = path.join(downloadDir, filename);
 
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({
@@ -272,7 +297,12 @@ router.get('/sample-template', auth, isAdmin, (req, res) => {
     const worksheet = XLSX.utils.json_to_sheet(sampleData);
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Students');
 
-    const tempPath = `uploads/excel/sample-template-${Date.now()}.xlsx`;
+    // Use appropriate directory based on environment
+    const tempDir = process.env.NODE_ENV === 'production' ? '/tmp/excel' : 'uploads/excel';
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir, { recursive: true });
+    }
+    const tempPath = `${tempDir}/sample-template-${Date.now()}.xlsx`;
     XLSX.writeFile(workbook, tempPath);
 
     res.download(tempPath, 'student-upload-template.xlsx', (err) => {
