@@ -16,6 +16,7 @@ const seedUsers = [
     rollno: 'STU001',
     department: 'Computer Science',
     year: '3rd Year',
+    college: 'Engineering College',
     role: 'student',
     phone: '+1234567890',
     address: '123 Student Street, College Town'
@@ -27,6 +28,7 @@ const seedUsers = [
     rollno: 'LIB001',
     department: 'Library Services',
     year: 'Graduate',
+    college: 'Staff College',
     role: 'librarian',
     phone: '+1234567891',
     address: '456 Library Avenue, College Town'
@@ -38,6 +40,7 @@ const seedUsers = [
     rollno: 'ADM001',
     department: 'Administration',
     year: 'Graduate',
+    college: 'Administrative College',
     role: 'admin',
     phone: '+1234567892',
     address: '789 Admin Building, College Town'
