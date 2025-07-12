@@ -208,13 +208,4 @@ bookSchema.pre('save', function(next) {
   next();
 });
 
-// Add indexes for better query performance
-bookSchema.index({ title: 'text', author: 'text', description: 'text' });
-bookSchema.index({ category: 1 });
-bookSchema.index({ author: 1 });
-bookSchema.index({ isActive: 1 });
-bookSchema.index({ createdAt: -1 });
-bookSchema.index({ isbn: 1 });
-bookSchema.index({ availableCopies: 1 });
-
 export default mongoose.model('Book', bookSchema);

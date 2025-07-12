@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useFirebaseAuth } from '../context/FirebaseOnlyAuthContext';
 import { Link } from 'react-router-dom';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import BooksGridSkeleton from '../components/ui/BooksGridSkeleton';
@@ -79,7 +79,7 @@ const BookCard = React.memo(({ book }) => (
 BookCard.displayName = 'BookCard';
 
 const Books = () => {
-  const { user } = useAuth();
+  const { user } = useFirebaseAuth();
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');

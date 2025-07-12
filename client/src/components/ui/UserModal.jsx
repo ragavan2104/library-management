@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useFirebaseAuth } from '../../context/FirebaseOnlyAuthContext';
 
 const UserModal = ({ isOpen, onClose, onSubmit, user = null, loading = false }) => {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser } = useFirebaseAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',

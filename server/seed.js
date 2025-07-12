@@ -35,7 +35,7 @@ const seedUsers = [
   },
   {
     name: 'System Administrator',
-    email: 'admin@college.edu',
+    email: 'ragavan212005@gmail.com',
     password: 'password123',
     rollno: 'ADM001',
     department: 'Administration',
@@ -197,7 +197,7 @@ const seedDatabase = async () => {
     console.log('  Password: password123');
     console.log('');
     console.log('👨‍💼 ADMIN:');
-    console.log('  Email: admin@college.edu');
+    console.log('  Email: ragavan212005@gmail.com');
     console.log('  Password: password123');
     console.log('='.repeat(50));
 

@@ -1,21 +1,30 @@
 import React, { useState } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useFirebaseAuth } from '../../context/FirebaseAuthContext';
 import { EyeIcon, EyeSlashIcon, BookOpenIcon } from '@heroicons/react/24/outline';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 
 const Login = () => {
-  const { login, loading, isAuthenticated } = useAuth();
+  const { login: authLogin, loading: authLoading, isAuthenticated } = useAuth();
+  const { login: firebaseLogin, mustChangePassword } = useFirebaseAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Redirect if already authenticated
-  if (isAuthenticated) {
+  // Redirect if already authenticated and no password change required
+  if (isAuthenticated && !mustChangePassword) {
     return <Navigate to="/dashboard" replace />;
+  }
+
+  // If password change is required, redirect to force password change
+  if (isAuthenticated && mustChangePassword) {
+    return <Navigate to="/force-password-change" replace />;
   }
 
   const handleChange = (e) => {
@@ -57,12 +66,92 @@ const Login = () => {
       return;
     }
 
-    const result = await login(formData.email, formData.password);
+    setIsLoading(true);
     
-    if (!result.success) {
-      // Handle login error - toast is already shown in AuthContext
-      setErrors({ submit: result.message });
+    // Check if this is admin/default credentials - use traditional auth directly
+    const isAdminEmail = formData.email === 'ragavan212005@gmail.com' || 
+                        formData.email === 'admin@college.edu' ||
+                        formData.email.includes('librarian');
+    
+    if (isAdminEmail) {
+      // Use traditional authentication for admin/librarian users
+      try {
+        const result = await authLogin(formData.email, formData.password);
+        
+        if (!result.success) {
+          setErrors({ submit: result.message || 'Login failed. Please check your credentials.' });
+        } else {
+          // Check if user must change password
+          const userResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/me`, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          });
+          
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            if (userData.user.mustChangePassword || userData.user.isFirstLogin) {
+              navigate('/force-password-change');
+              return;
+            }
+          }
+          
+          // Traditional login successful, redirect to dashboard
+          navigate('/dashboard');
+        }
+      } catch (authError) {
+        console.error('Traditional login failed:', authError);
+        setErrors({ submit: 'Login failed. Please check your credentials.' });
+      }
+    } else {
+      // For student/new users, try Firebase first
+      try {
+        const firebaseResult = await firebaseLogin(formData.email, formData.password);
+        
+        if (firebaseResult.mustChangePassword) {
+          // Redirect to force password change
+          navigate('/force-password-change');
+          return;
+        }
+        
+        // If Firebase login succeeds, redirect to dashboard
+        navigate('/dashboard');
+      } catch (firebaseError) {
+        // If Firebase login fails, try traditional login as fallback
+        console.log('Firebase login failed, trying traditional login...');
+        
+        try {
+          const result = await authLogin(formData.email, formData.password);
+          
+          if (!result.success) {
+            setErrors({ submit: result.message || 'Login failed. Please check your credentials.' });
+          } else {
+            // Check if user must change password
+            const userResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/me`, {
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+              }
+            });
+            
+            if (userResponse.ok) {
+              const userData = await userResponse.json();
+              if (userData.user.mustChangePassword || userData.user.isFirstLogin) {
+                navigate('/force-password-change');
+                return;
+              }
+            }
+            
+            // Traditional login successful, redirect to dashboard
+            navigate('/dashboard');
+          }
+        } catch (authError) {
+          console.error('Both login methods failed:', authError);
+          setErrors({ submit: 'Login failed. Please check your credentials.' });
+        }
+      }
     }
+    
+    setIsLoading(false);
   };
 
   return (
@@ -145,12 +234,22 @@ const Login = () => {
         {/* Submit Button */}
         <button
           type="submit"
-          disabled={loading}
+          disabled={isLoading || authLoading}
           className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? <LoadingSpinner size="small" color="white" /> : 'Sign In'}
+          {(isLoading || authLoading) ? <LoadingSpinner size="small" color="white" /> : 'Sign In'}
         </button>
       </form>
+
+      {/* Forgot Password Link */}
+      <div className="mt-4 text-center">
+        <Link
+          to="/forgot-password"
+          className="text-sm text-blue-600 hover:text-blue-500"
+        >
+          Forgot your password?
+        </Link>
+      </div>
 
       {/* Register Link */}
       <div className="mt-6 text-center">
@@ -165,14 +264,17 @@ const Login = () => {
         </p>
       </div>
 
-      {/* Demo Credentials */}
-      <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-        <h4 className="text-sm font-medium text-gray-700 mb-2">Demo Credentials:</h4>
-        <div className="text-xs text-gray-600 space-y-1">
-          <p><strong>Student:</strong> student@college.edu / password123</p>
-          <p><strong>Librarian:</strong> librarian@college.edu / password123</p>
-          <p><strong>Admin:</strong> admin@college.edu / password123</p>
-        </div>
+      {/* Information Box for New Users */}
+      <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <h4 className="text-sm font-medium text-blue-800 mb-2">New User?</h4>
+        <p className="text-xs text-blue-700 mb-2">
+          If an admin has created your account, you'll receive an email with login instructions.
+        </p>
+        <ul className="text-xs text-blue-600 space-y-1 list-disc list-inside">
+          <li>Check your email for account details</li>
+          <li>Use the temporary password or reset link</li>
+          <li>You'll be asked to create a new password on first login</li>
+        </ul>
       </div>
     </div>
   );

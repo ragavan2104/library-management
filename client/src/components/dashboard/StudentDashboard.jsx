@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { useSocket } from '../../context/SocketContext';
+import { useFirebaseAuth } from '../../context/FirebaseOnlyAuthContext';
 import LoadingSpinner from '../ui/LoadingSpinner';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const StudentDashboard = () => {
-  const { user } = useAuth();
-  const { socket } = useSocket();
+  const { user } = useFirebaseAuth();
   const [borrowedBooks, setBorrowedBooks] = useState([]);
   const [stats, setStats] = useState({
     totalBorrowed: 0,
@@ -19,20 +17,7 @@ const StudentDashboard = () => {
   useEffect(() => {
     fetchBorrowedBooks();
     fetchStats();
-
-    // Socket listeners
-    if (socket) {
-      socket.on('bookReturned', handleBookReturned);
-      socket.on('bookBorrowed', handleBookBorrowed);
-    }
-
-    return () => {
-      if (socket) {
-        socket.off('bookReturned', handleBookReturned);
-        socket.off('bookBorrowed', handleBookBorrowed);
-      }
-    };
-  }, [socket]);
+  }, []);
 
   const fetchBorrowedBooks = async () => {
     try {
@@ -65,20 +50,6 @@ const StudentDashboard = () => {
     } catch (error) {
       console.error('Error fetching stats:', error);
       setLoading(false);
-    }
-  };
-
-  const handleBookReturned = (data) => {
-    if (data.userId === user._id) {
-      setBorrowedBooks(prev => prev.filter(borrow => borrow._id !== data.borrowId));
-      fetchStats();
-    }
-  };
-
-  const handleBookBorrowed = (data) => {
-    if (data.userId === user._id) {
-      fetchBorrowedBooks();
-      fetchStats();
     }
   };
 

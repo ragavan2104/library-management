@@ -176,7 +176,10 @@ router.post('/login', [
         year: user.year,
         role: user.role,
         borrowedBooks: user.borrowedBooks,
-        totalFines: user.totalFines
+        totalFines: user.totalFines,
+        isFirstLogin: user.isFirstLogin,
+        mustChangePassword: user.mustChangePassword,
+        createdByAdmin: user.createdByAdmin
       }
     });
 
@@ -327,6 +330,81 @@ router.put('/change-password', auth, [
   }
 });
 
+// @route   POST /api/auth/change-password
+// @desc    Change password for first-time login
+// @access  Private
+router.post('/change-password', auth, [
+  body('currentPassword')
+    .notEmpty()
+    .withMessage('Current password is required'),
+  body('newPassword')
+    .isLength({ min: 6 })
+    .withMessage('New password must be at least 6 characters')
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+    .withMessage('New password must contain at least one uppercase letter, one lowercase letter, and one number')
+], async (req, res) => {
+  try {
+    // Check for validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation errors',
+        errors: errors.array()
+      });
+    }
+
+    const { currentPassword, newPassword } = req.body;
+
+    // Find user with password
+    const user = await User.findById(req.user.id).select('+password');
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Verify current password
+    const isCurrentPasswordValid = await user.comparePassword(currentPassword);
+
+    if (!isCurrentPasswordValid) {
+      return res.status(400).json({
+        success: false,
+        message: 'Current password is incorrect'
+      });
+    }
+
+    // Update password and reset first login flags
+    user.password = newPassword;
+    user.isFirstLogin = false;
+    user.mustChangePassword = false;
+
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Password changed successfully',
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isFirstLogin: user.isFirstLogin,
+        mustChangePassword: user.mustChangePassword
+      }
+    });
+
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during password change'
+    });
+  }
+});
+
 // @route   POST /api/auth/admin/create-user
 // @desc    Create a new user (Admin only)
 // @access  Private (Admin only)
@@ -403,9 +481,12 @@ router.post('/admin/create-user', auth, isAdmin, [
       }
     }
 
-    // Generate password based on role
+    // Generate password based on role or use provided password
     let password;
-    if (role === 'student' && rollno) {
+    if (req.body.password) {
+      // Use provided password (from admin UI)
+      password = req.body.password;
+    } else if (role === 'student' && rollno) {
       // Extract username from email (part before @)
       const username = email.split('@')[0];
       password = `${username}@${rollno}`;
@@ -420,7 +501,13 @@ router.post('/admin/create-user', auth, isAdmin, [
       email,
       password,
       role,
-      isActive: true
+      isActive: true,
+      isFirstLogin: req.body.isFirstLogin || true,
+      mustChangePassword: req.body.mustChangePassword || true,
+      createdByAdmin: req.body.createdByAdmin || true,
+      createdBy: req.body.createdBy || req.user.id,
+      phone: req.body.phone || '',
+      address: req.body.address || ''
     };
 
     // Add student-specific fields if role is student

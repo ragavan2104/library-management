@@ -96,6 +96,23 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  isFirstLogin: {
+    type: Boolean,
+    default: false
+  },
+  mustChangePassword: {
+    type: Boolean,
+    default: false
+  },
+  createdByAdmin: {
+    type: Boolean,
+    default: false
+  },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
   profileImage: {
     type: String,
     default: ''

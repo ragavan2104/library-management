@@ -166,26 +166,19 @@ router.get('/', [
     const sortOptions = {};
     sortOptions[sortBy] = sortOrder === 'asc' ? 1 : -1;
 
-    // Execute query with only necessary fields for list view
+    // Execute query
     const books = await Book.find(query)
-      .select('title author isbn category genre quantity availableCopies totalCopies coverImage publishedYear createdAt addedBy')
       .populate('addedBy', 'name role')
       .sort(sortOptions)
       .skip(skip)
       .limit(limit)
       .lean();
 
-    // Get total count for pagination (optimized)
+    // Get total count for pagination
     const total = await Book.countDocuments(query);
 
-    // Get categories for filter (cache this if possible)
+    // Get categories for filter
     const categories = await Book.distinct('category', { isActive: true });
-
-    // Add caching headers for better performance
-    res.set({
-      'Cache-Control': 'public, max-age=300', // Cache for 5 minutes
-      'ETag': `books-${page}-${JSON.stringify(query)}`
-    });
 
     res.json({
       success: true,

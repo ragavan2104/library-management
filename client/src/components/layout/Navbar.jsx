@@ -1,9 +1,9 @@
 import React from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useFirebaseAuth } from '../../context/FirebaseOnlyAuthContext';
 import { BellIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 
 const Navbar = () => {
-  const { user } = useAuth();
+  const { user } = useFirebaseAuth();
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 fixed top-0 right-0 left-64 z-20">

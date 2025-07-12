@@ -1,19 +1,20 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useFirebaseAuth } from '../../context/FirebaseOnlyAuthContext';
 import {
   HomeIcon,
   BookOpenIcon,
   UsersIcon,
   ClockIcon,
   UserIcon,
+  UserPlusIcon,
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 
 const Sidebar = () => {
-  const { user, logout } = useAuth();
+  const { user, logout } = useFirebaseAuth();
   const location = useLocation();
 
   const navigation = [
@@ -21,6 +22,7 @@ const Sidebar = () => {
     { name: 'Books', href: '/books', icon: BookOpenIcon, roles: ['student', 'librarian', 'admin'] },
     { name: 'My Books', href: '/my-books', icon: ClockIcon, roles: ['student'] },
     { name: 'Users', href: '/users', icon: UsersIcon, roles: ['librarian', 'admin'] },
+    { name: 'Create User', href: '/create-user', icon: UserPlusIcon, roles: ['admin'] },
     { name: 'Borrow History', href: '/borrow-history', icon: ClockIcon, roles: ['librarian', 'admin'] },
     { name: 'Profile', href: '/profile', icon: UserIcon, roles: ['student', 'librarian', 'admin'] },
   ];

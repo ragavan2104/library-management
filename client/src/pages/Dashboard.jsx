@@ -1,11 +1,11 @@
 import React from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useFirebaseAuth } from '../context/FirebaseOnlyAuthContext';
 import AdminDashboard from '../components/dashboard/AdminDashboard';
 import LibrarianDashboard from '../components/dashboard/LibrarianDashboard';
 import StudentDashboard from '../components/dashboard/StudentDashboard';
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user } = useFirebaseAuth();
 
   // Route to appropriate dashboard based on user role
   switch (user?.role) {
