@@ -10,6 +10,7 @@ import {
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
 } from '@heroicons/react/24/outline';
+import clsx from 'clsx';
 
 const Sidebar = () => {
   const { user, logout } = useAuth();
