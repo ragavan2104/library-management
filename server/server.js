@@ -71,7 +71,15 @@ app.use('/templates', express.static('public/templates'));
 // Health check route
 app.get('/', (req, res) => {
   res.json({ 
-    message: 'Library Management API is running!', 
+    message: 'Library Management API is running!',
+    cors: {
+      allowedOrigins: [
+        'http://localhost:5173',
+        'https://library-management-peach-ten.vercel.app',
+        process.env.CLIENT_URL
+      ].filter(Boolean),
+      requestOrigin: req.headers.origin
+    },
     status: 'OK',
     timestamp: new Date().toISOString()
   });
