@@ -14,6 +14,8 @@ import LoadingSpinner from '../ui/LoadingSpinner';
 import UserModal from '../ui/UserModal';
 import toast from 'react-hot-toast';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const AdminDashboard = () => {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
@@ -39,7 +41,7 @@ const AdminDashboard = () => {
           'Authorization': `Bearer ${token}`
         }
       };
-      const response = await axios.get('http://localhost:5000/api/users', config);
+      const response = await axios.get(`${API_URL}/api/users`, config);
       setUsers(response.data.data.users);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -79,7 +81,7 @@ const AdminDashboard = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        'http://localhost:5000/api/admin/upload-students',
+        `${API_URL}/api/admin/upload-students`,
         formData,
         {
           headers: {
@@ -117,7 +119,7 @@ const AdminDashboard = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        'http://localhost:5000/api/admin/sample-template',
+        `${API_URL}/api/admin/sample-template`,
         { 
           responseType: 'blob',
           headers: {
@@ -148,7 +150,7 @@ const AdminDashboard = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        `http://localhost:5000${uploadResults.downloadPath}`,
+        `${API_URL}${uploadResults.downloadPath}`,
         { 
           responseType: 'blob',
           headers: {
@@ -186,11 +188,11 @@ const AdminDashboard = () => {
 
       if (editingUser) {
         // Update existing user
-        const response = await axios.put(`http://localhost:5000/api/users/${editingUser._id}`, userData, config);
+        const response = await axios.put(`${API_URL}/api/users/${editingUser._id}`, userData, config);
         toast.success('User updated successfully');
       } else {
         // Create new user
-        const response = await axios.post('http://localhost:5000/api/auth/admin/create-user', userData, config);
+        const response = await axios.post(`${API_URL}/api/auth/admin/create-user`, userData, config);
         
         if (response.data.success) {
           toast.success(`${userData.role} created successfully!`);
@@ -238,7 +240,7 @@ const AdminDashboard = () => {
       console.log('Toggling user status:', { userId, currentStatus }); // Debug log
       
       const response = await axios.put(
-        `http://localhost:5000/api/users/${userId}/toggle-status`,
+        `${API_URL}/api/users/${userId}/toggle-status`,
         {},
         config
       );
@@ -263,7 +265,7 @@ const AdminDashboard = () => {
         }
       };
       const response = await axios.put(
-        `http://localhost:5000/api/users/${userId}/role`,
+        `${API_URL}/api/users/${userId}/role`,
         { role: newRole },
         config
       );
@@ -295,7 +297,7 @@ const AdminDashboard = () => {
         }
       };
       
-      await axios.delete(`http://localhost:5000/api/users/${userId}`, config);
+      await axios.delete(`${API_URL}/api/users/${userId}`, config);
       toast.success('User deleted successfully');
       fetchUsers(); // Refresh the list
     } catch (error) {

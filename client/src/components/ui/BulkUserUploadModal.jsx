@@ -29,7 +29,8 @@ const BulkUserUploadModal = ({ isOpen, onClose, onUpload }) => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/users/bulk', {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/api/users/bulk`, {
         method: 'POST',
         body: formData,
         headers: {
@@ -67,7 +68,8 @@ const BulkUserUploadModal = ({ isOpen, onClose, onUpload }) => {
     try {
       setIsDownloading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/users/sample-template', {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/api/users/sample-template`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'

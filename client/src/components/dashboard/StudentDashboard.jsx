@@ -3,6 +3,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useSocket } from '../../context/SocketContext';
 import LoadingSpinner from '../ui/LoadingSpinner';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const StudentDashboard = () => {
   const { user } = useAuth();
   const { socket } = useSocket();
@@ -34,7 +36,7 @@ const StudentDashboard = () => {
 
   const fetchBorrowedBooks = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/borrows/my-books', {
+      const response = await fetch(`${API_URL}/api/borrows/my-books`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -50,7 +52,7 @@ const StudentDashboard = () => {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/dashboard/student/stats', {
+      const response = await fetch(`${API_URL}/api/dashboard/student/stats`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }

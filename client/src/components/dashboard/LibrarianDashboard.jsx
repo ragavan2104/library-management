@@ -17,6 +17,8 @@ import BookModal from '../ui/BookModal';
 import BulkUploadModal from '../ui/BulkUploadModal';
 import toast from 'react-hot-toast';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const LibrarianDashboard = () => {
   const [books, setBooks] = useState([]);
   const [borrows, setBorrows] = useState([]);
@@ -49,10 +51,10 @@ const LibrarianDashboard = () => {
       };
 
       const [booksResponse, borrowsResponse, overdueResponse, statsResponse] = await Promise.all([
-        axios.get('http://localhost:5000/api/books', config),
-        axios.get('http://localhost:5000/api/borrows', config),
-        axios.get('http://localhost:5000/api/borrows/overdue', config),
-        axios.get('http://localhost:5000/api/dashboard/stats', config)
+        axios.get(`${API_URL}/api/books`, config),
+        axios.get(`${API_URL}/api/borrows`, config),
+        axios.get(`${API_URL}/api/borrows/overdue`, config),
+        axios.get(`${API_URL}/api/dashboard/stats`, config)
       ]);
       
       setBooks(booksResponse.data.data.books);
@@ -80,11 +82,11 @@ const LibrarianDashboard = () => {
 
       if (editingBook) {
         // Update existing book
-        await axios.put(`http://localhost:5000/api/books/${editingBook._id}`, bookData, config);
+        await axios.put(`${API_URL}/api/books/${editingBook._id}`, bookData, config);
         toast.success('Book updated successfully');
       } else {
         // Add new book
-        await axios.post('http://localhost:5000/api/books', bookData, config);
+        await axios.post(`${API_URL}/api/books`, bookData, config);
         toast.success('Book added successfully');
       }
       
@@ -117,7 +119,7 @@ const LibrarianDashboard = () => {
         }
       };
 
-      await axios.delete(`http://localhost:5000/api/books/${bookId}`, config);
+      await axios.delete(`${API_URL}/api/books/${bookId}`, config);
       toast.success('Book deleted successfully');
       fetchData(); // Refresh data
     } catch (error) {
@@ -154,7 +156,7 @@ const LibrarianDashboard = () => {
 
       if (!student && rollno.trim()) {
         // Find user by roll number
-        const userResponse = await axios.get(`http://localhost:5000/api/users?search=${rollno}`, config);
+        const userResponse = await axios.get(`${API_URL}/api/users?search=${rollno}`, config);
         const users = userResponse.data.data.users;
         student = users.find(user => user.rollno === rollno && user.role === 'student');
 
@@ -170,7 +172,7 @@ const LibrarianDashboard = () => {
         dueDate: dueDate.toISOString()
       };
 
-      await axios.post('http://localhost:5000/api/borrows', borrowData, config);
+      await axios.post(`${API_URL}/api/borrows`, borrowData, config);
       
       toast.success(`Book checked out to ${student.name}`);
       fetchData(); // Refresh data
@@ -193,7 +195,7 @@ const LibrarianDashboard = () => {
         }
       };
 
-      await axios.put(`http://localhost:5000/api/borrows/${borrowId}/return`, {}, config);
+      await axios.put(`${API_URL}/api/borrows/${borrowId}/return`, {}, config);
       toast.success('Book checked in successfully');
       fetchData(); // Refresh data
     } catch (error) {
@@ -211,7 +213,7 @@ const LibrarianDashboard = () => {
         }
       };
 
-      await axios.put(`http://localhost:5000/api/borrows/${borrowId}/renew`, {}, config);
+      await axios.put(`${API_URL}/api/borrows/${borrowId}/renew`, {}, config);
       toast.success('Book renewed successfully');
       fetchData(); // Refresh data
     } catch (error) {
@@ -230,7 +232,7 @@ const LibrarianDashboard = () => {
         }
       };
 
-      await axios.put(`http://localhost:5000/api/borrows/${borrowId}/pay-fine`, 
+      await axios.put(`${API_URL}/api/borrows/${borrowId}/pay-fine`, 
         { amount }, 
         config
       );
@@ -251,7 +253,7 @@ const LibrarianDashboard = () => {
         }
       };
 
-      const response = await axios.put('http://localhost:5000/api/borrows/calculate-fines', {}, config);
+      const response = await axios.put(`${API_URL}/api/borrows/calculate-fines`, {}, config);
       toast.success(`Fines calculated for ${response.data.data.updatedBorrows} overdue books`);
       fetchData(); // Refresh data
     } catch (error) {
@@ -274,7 +276,7 @@ const LibrarianDashboard = () => {
         }
       };
 
-      const response = await axios.get(`http://localhost:5000/api/users?search=${searchTerm}&role=student`, config);
+      const response = await axios.get(`${API_URL}/api/users?search=${searchTerm}&role=student`, config);
       setStudentSearchResults(response.data.data.users);
     } catch (error) {
       console.error('Search students error:', error);
