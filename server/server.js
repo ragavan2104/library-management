@@ -2,8 +2,8 @@ import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { createServer } from 'http';
-import { Server } from 'socket.io';
+// import { createServer } from 'http';
+// import { Server } from 'socket.io';
 
 // Import routes
 import authRoutes from './routes/auth.js';
@@ -17,13 +17,14 @@ import adminRoutes from './routes/admin.js';
 dotenv.config();
 
 const app = express();
-const server = createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:5173", // Use environment variable
-    methods: ["GET", "POST", "PUT", "DELETE"]
-  }
-});
+// Remove Socket.io for Vercel serverless compatibility
+// const server = createServer(app);
+// const io = new Server(server, {
+//   cors: {
+//     origin: process.env.CLIENT_URL || "http://localhost:5173",
+//     methods: ["GET", "POST", "PUT", "DELETE"]
+//   }
+// });
 
 const PORT = process.env.PORT || 5000;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/library_management';
@@ -51,6 +52,23 @@ app.use(async (req, res, next) => {
 app.use('/uploads', express.static('uploads'));
 app.use('/templates', express.static('public/templates'));
 
+// Health check route
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Library Management API is running!', 
+    status: 'OK',
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get('/health', (req, res) => {
+  res.json({ 
+    message: 'Server is healthy', 
+    status: 'OK',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/books', bookRoutes);
@@ -59,40 +77,40 @@ app.use('/api/borrows', borrowRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/admin', adminRoutes);
 
-// Socket.io connection handling
-io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
+// Socket.io connection handling - Disabled for Vercel serverless deployment
+// io.on('connection', (socket) => {
+//   console.log('User connected:', socket.id);
 
-  // Join room for real-time updates
-  socket.on('join-library', (userId) => {
-    socket.join('library-updates');
-    console.log(`User ${userId} joined library updates room`);
-  });
+//   // Join room for real-time updates
+//   socket.on('join-library', (userId) => {
+//     socket.join('library-updates');
+//     console.log(`User ${userId} joined library updates room`);
+//   });
 
-  // Handle book borrow events
-  socket.on('book-borrowed', (data) => {
-    io.to('library-updates').emit('book-status-changed', {
-      bookId: data.bookId,
-      status: 'borrowed',
-      borrowedBy: data.userId,
-      timestamp: new Date()
-    });
-  });
+//   // Handle book borrow events
+//   socket.on('book-borrowed', (data) => {
+//     io.to('library-updates').emit('book-status-changed', {
+//       bookId: data.bookId,
+//       status: 'borrowed',
+//       borrowedBy: data.userId,
+//       timestamp: new Date()
+//     });
+//   });
 
-  // Handle book return events
-  socket.on('book-returned', (data) => {
-    io.to('library-updates').emit('book-status-changed', {
-      bookId: data.bookId,
-      status: 'available',
-      returnedBy: data.userId,
-      timestamp: new Date()
-    });
-  });
+//   // Handle book return events
+//   socket.on('book-returned', (data) => {
+//     io.to('library-updates').emit('book-status-changed', {
+//       bookId: data.bookId,
+//       status: 'available',
+//       returnedBy: data.userId,
+//       timestamp: new Date()
+//     });
+//   });
 
-  socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
-  });
-});
+//   socket.on('disconnect', () => {
+//     console.log('User disconnected:', socket.id);
+//   });
+// });
 
 // MongoDB connection
 let isConnected = false;
@@ -117,7 +135,7 @@ if (process.env.NODE_ENV !== 'production') {
   const startServer = async () => {
     try {
       await connectToDatabase();
-      server.listen(PORT, () => {
+      app.listen(PORT, () => {
         console.log(`🚀 Server running on port ${PORT}`);
         console.log(`📚 Library Management API ready!`);
       });
