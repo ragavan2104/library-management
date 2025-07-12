@@ -20,7 +20,7 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173", // Vite default port
+    origin: process.env.CLIENT_URL || "http://localhost:5173", // Use environment variable
     methods: ["GET", "POST", "PUT", "DELETE"]
   }
 });
@@ -30,7 +30,7 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/librar
 
 // Middleware
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: process.env.CLIENT_URL || "http://localhost:5173",
   credentials: true
 }));
 app.use(express.json());

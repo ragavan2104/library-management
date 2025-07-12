@@ -17,7 +17,7 @@
     },
     {
       "src": "/api/(.*)",
-      "dest": "https://your-server-url.vercel.app/api/$1"
+      "dest": "https://library-management-mhs.vercel.app/api/$1"
     },
     {
       "src": "/(.*)",
